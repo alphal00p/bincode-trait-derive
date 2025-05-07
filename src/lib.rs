@@ -16,19 +16,16 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
         .iter()
         .filter(|a| a.path().is_ident("trait_decode"))
     {
-        attr.parse_nested_meta(|meta| {
+        let _ = attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("trait") {
                 option_trait_name = Some(meta.value()?.parse::<Path>()?);
-                Ok(())
-            } else {
-                Err(meta.error("unsupported attribute argument, correct usage: #[trait_decode(trait = path::to::Trait"))
             }
-        })
-        .expect("Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]");
+            Ok(())
+        });
     }
 
     let trait_ident = option_trait_name.expect(
-        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]",
+        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
     );
 
     let mut generics = input.generics.clone();
@@ -146,19 +143,16 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
         .iter()
         .filter(|a| a.path().is_ident("trait_decode"))
     {
-        attr.parse_nested_meta(|meta| {
+        let _ = attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("trait") {
                 option_trait_name = Some(meta.value()?.parse::<Path>()?);
-                Ok(())
-            } else {
-                Err(meta.error("unsupported attribute argument, correct usage: #[trait_decode(trait = path::to::Trait"))
             }
-        })
-        .expect("Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]");
+            Ok(())
+        });
     }
 
     let trait_ident = option_trait_name.expect(
-        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]",
+        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
     );
 
     let mut generics = input.generics.clone();
