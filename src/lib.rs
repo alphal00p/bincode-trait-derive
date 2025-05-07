@@ -149,13 +149,15 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
                 option_trait_name = Some(meta.value()?.parse::<Path>()?);
                 Ok(())
             } else {
-                Err(meta.error("unsupported attribute argument"))
+                Err(meta.error("unsupported attribute argument, correct usage: #[trait_decode(trait = path::to::Trait"))
             }
         })
-        .expect("Failed to parse attribute");
+        .expect("Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]");
     }
 
-    let trait_ident = option_trait_name.unwrap();
+    let trait_ident = option_trait_name.expect(
+        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait]",
+    );
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
