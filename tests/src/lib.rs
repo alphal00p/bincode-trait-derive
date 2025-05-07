@@ -1,5 +1,5 @@
 use bincode::{Decode, Encode};
-use bincode_trait_derive::TraitDecode;
+use bincode_trait_derive::{BorrowDecodeFromTraitDecode, TraitDecode};
 
 #[derive(Clone)]
 pub struct Particle {
@@ -127,7 +127,7 @@ impl FishListTrait for MyContext {
 
 impl ParticleFishTrait for MyContext {}
 
-#[derive(Encode, TraitDecode)]
+#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
 #[trait_decode(trait = "ParticleFishTrait")]
 pub struct Test {
     pub particle: Particle,
@@ -136,14 +136,14 @@ pub struct Test {
     pub fish_or_cow: FishOrCow,
 }
 
-#[derive(Encode, TraitDecode)]
+#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
 #[trait_decode(trait = "FishListTrait")]
 pub enum FishOrCow {
     Fish(Fish),
     Cow(Cow),
 }
 
-#[derive(Encode, TraitDecode)]
+#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
 #[trait_decode(trait = "ParticleFishTrait")]
 pub struct TestGeneric<T = Fish> {
     pub particle: Particle,
