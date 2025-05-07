@@ -77,13 +77,13 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
             Fields::Named(fields_named) => {
                 let decode_fields = fields_named.named.iter().map(|f| {
                     let ident = &f.ident;
-                    quote! { #ident: Decode::decode(decoder)? }
+                    quote! { #ident: ::bincode::Decode::decode(decoder)? }
                 });
                 quote! { Ok(Self { #(#decode_fields),* }) }
             }
             Fields::Unnamed(fields_unnamed) => {
                 let decode_fields = fields_unnamed.unnamed.iter().map(|_| {
-                    quote! { Decode::decode(decoder)? }
+                    quote! { ::bincode::Decode::decode(decoder)? }
                 });
                 quote! { Ok(Self(#(#decode_fields),*)) }
             }
@@ -97,7 +97,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
                     Fields::Named(fields_named) => {
                         let decode_fields = fields_named.named.iter().map(|f| {
                             let ident = &f.ident;
-                            quote! { #ident: Decode::decode(decoder)? }
+                            quote! { #ident: ::bincode::Decode::decode(decoder)? }
                         });
                         quote! {
                             #idx => Ok(Self::#variant_ident { #(#decode_fields),* }),
@@ -105,7 +105,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
                     }
                     Fields::Unnamed(fields_unnamed) => {
                         let decode_fields = fields_unnamed.unnamed.iter().map(|_| {
-                            quote! { Decode::decode(decoder)? }
+                            quote! { ::bincode::Decode::decode(decoder)? }
                         });
                         quote! {
                             #idx => Ok(Self::#variant_ident(#(#decode_fields),*)),
@@ -118,7 +118,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
             });
 
             quote! {
-                let discriminant: usize = Decode::decode(decoder)?;
+                let discriminant: usize = ::bincode::Decode::decode(decoder)?;
                 match discriminant {
                     #(#variants)*
                     other => Err(::bincode::error::DecodeError::OtherString(format!("unexpected enum variant"))),
