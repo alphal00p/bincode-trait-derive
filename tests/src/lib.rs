@@ -128,7 +128,7 @@ impl FishListTrait for MyContext {
 impl ParticleFishTrait for MyContext {}
 
 #[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
-#[trait_decode(trait = "ParticleFishTrait")]
+#[trait_decode(trait = ParticleFishTrait)]
 pub struct Test {
     pub particle: Particle,
     pub fish: Fish,
@@ -137,14 +137,14 @@ pub struct Test {
 }
 
 #[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
-#[trait_decode(trait = "FishListTrait")]
+#[trait_decode(trait = FishListTrait)]
 pub enum FishOrCow {
     Fish(Fish),
     Cow(Cow),
 }
 
 #[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
-#[trait_decode(trait = "ParticleFishTrait")]
+#[trait_decode(trait = ParticleFishTrait)]
 pub struct TestGeneric<T = Fish> {
     pub particle: Particle,
     pub fish: Fish,

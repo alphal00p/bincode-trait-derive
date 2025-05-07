@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Lit, Type, TypeParam,
-    TypePath, WherePredicate, parse_macro_input,
+    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Lit, Path, Type,
+    TypeParam, TypePath, WherePredicate, parse_macro_input,
 };
 
 #[proc_macro_derive(TraitDecode, attributes(trait_decode))]
@@ -10,7 +10,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
 
-    let mut trait_name: Option<String> = None;
+    let mut option_trait_name: Option<Path> = None;
     for attr in input
         .attrs
         .iter()
@@ -18,25 +18,18 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
     {
         attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("trait") {
-                let value = meta.value()?.parse::<Lit>()?;
-                if let Lit::Str(lit_str) = value {
-                    trait_name = Some(lit_str.value());
-                    return Ok(());
-                } else {
-                    return Err(meta.error("expected a string literal"));
-                }
+                option_trait_name = Some(meta.value()?.parse::<Path>()?);
+                Ok(())
+            } else {
+                Err(meta.error("unsupported attribute argument"))
             }
-            Err(meta.error("unsupported attribute argument"))
         })
         .expect("Failed to parse attribute");
     }
 
-    let trait_ident = syn::Ident::new(
-        trait_name
-            .as_ref()
-            .expect("expected #[trait_decode(trait = \"TraitName\")] attribute"),
-        proc_macro2::Span::call_site(),
-    );
+    let trait_name = option_trait_name.unwrap();
+
+    let trait_ident = trait_name.get_ident().cloned().unwrap();
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
@@ -147,7 +140,7 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
 
-    let mut trait_name: Option<String> = None;
+    let mut option_trait_name: Option<Path> = None;
     for attr in input
         .attrs
         .iter()
@@ -155,25 +148,18 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     {
         attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("trait") {
-                let value = meta.value()?.parse::<Lit>()?;
-                if let Lit::Str(lit_str) = value {
-                    trait_name = Some(lit_str.value());
-                    return Ok(());
-                } else {
-                    return Err(meta.error("expected a string literal"));
-                }
+                option_trait_name = Some(meta.value()?.parse::<Path>()?);
+                Ok(())
+            } else {
+                Err(meta.error("unsupported attribute argument"))
             }
-            Err(meta.error("unsupported attribute argument"))
         })
         .expect("Failed to parse attribute");
     }
 
-    let trait_ident = syn::Ident::new(
-        trait_name
-            .as_ref()
-            .expect("expected #[trait_decode(trait = \"TraitName\")] attribute"),
-        proc_macro2::Span::call_site(),
-    );
+    let trait_name = option_trait_name.unwrap();
+
+    let trait_ident = trait_name.get_ident().cloned().unwrap();
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
