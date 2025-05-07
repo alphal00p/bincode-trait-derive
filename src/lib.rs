@@ -24,9 +24,16 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
         });
     }
 
-    let trait_ident = option_trait_name.expect(
-        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
-    );
+    let trait_ident = if let Some(trait_ident) = option_trait_name {
+        trait_ident
+    } else {
+        return syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
+        )
+        .to_compile_error()
+        .into();
+    };
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
@@ -151,9 +158,16 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
         });
     }
 
-    let trait_ident = option_trait_name.expect(
-        "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
-    );
+    let trait_ident = if let Some(trait_ident) = option_trait_name {
+        trait_ident
+    } else {
+        return syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
+        )
+        .to_compile_error()
+        .into();
+    };
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
