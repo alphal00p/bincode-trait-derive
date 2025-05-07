@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Lit, Path, Type,
-    TypeParam, TypePath, WherePredicate, parse_macro_input,
+    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Path, Type, TypeParam,
+    TypePath, WherePredicate, parse_macro_input,
 };
 
 #[proc_macro_derive(TraitDecode, attributes(trait_decode))]
