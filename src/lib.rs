@@ -126,7 +126,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
         impl #impl_generics ::bincode::Decode<__Context> for #struct_name #ty_generics #where_clause
 
          {
-            fn decode<D: ::bincode::de::Decoder<Context = __Context>>(decoder: &mut D) -> core::result::Result<Self, ::bincode::error::DecodeError> {
+            fn decode<D: ::bincode::de::Decoder<Context = __Context>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
                 #decode_body
             }
         }
@@ -205,7 +205,7 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
         impl #impl_generics ::bincode::BorrowDecode<'_de, __Context> for #struct_name #ty_generics #where_clause
 
          {
-            fn borrow_decode<D: ::bincode::de::BorrowDecoder<'_de, Context = __Context>>(decoder: &mut D) -> core::result::Result<Self, ::bincode::error::DecodeError> {
+            fn borrow_decode<D: ::bincode::de::BorrowDecoder<'_de, Context = __Context>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
                 ::bincode::Decode::decode(decoder)
             }
         }
