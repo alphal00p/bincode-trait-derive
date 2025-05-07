@@ -1,5 +1,4 @@
-use bincode::{Decode, Encode};
-use bincode_trait_derive::{BorrowDecodeFromTraitDecode, TraitDecode};
+use bincode_trait_derive::{BorrowDecodeFromDecode, Decode, Encode};
 
 #[derive(Clone)]
 pub struct Particle {
@@ -27,7 +26,7 @@ impl ParticleListTrait for ParticleList {
     }
 }
 
-impl Encode for Particle {
+impl bincode::Encode for Particle {
     fn encode<E: bincode::enc::Encoder>(
         &self,
         encoder: &mut E,
@@ -37,7 +36,7 @@ impl Encode for Particle {
     }
 }
 
-impl<C> Decode<C> for Particle
+impl<C> bincode::Decode<C> for Particle
 where
     C: ParticleListTrait,
 {
@@ -57,7 +56,7 @@ pub struct Fish {
     pub name: String,
 }
 
-impl Encode for Fish {
+impl bincode::Encode for Fish {
     fn encode<E: bincode::enc::Encoder>(
         &self,
         encoder: &mut E,
@@ -87,7 +86,7 @@ impl FishListTrait for FishList {
     }
 }
 
-impl<C> Decode<C> for Fish
+impl<C> bincode::Decode<C> for Fish
 where
     C: FishListTrait,
 {
@@ -101,7 +100,8 @@ where
     }
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, bincode_trait_derive::Decode)]
+#[trait_decode()]
 pub struct Cow {
     pub id: usize,
 }
@@ -127,7 +127,7 @@ impl FishListTrait for MyContext {
 
 impl ParticleFishTrait for MyContext {}
 
-#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
+#[derive(Encode, Decode, BorrowDecodeFromDecode)]
 #[trait_decode(trait = ParticleFishTrait)]
 pub struct Test {
     pub particle: Particle,
@@ -136,14 +136,14 @@ pub struct Test {
     pub fish_or_cow: FishOrCow,
 }
 
-#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
+#[derive(Encode, Decode, BorrowDecodeFromDecode)]
 #[trait_decode(trait = FishListTrait)]
 pub enum FishOrCow {
     Fish(Fish),
     Cow(Cow),
 }
 
-#[derive(Encode, TraitDecode, BorrowDecodeFromTraitDecode)]
+#[derive(bincode_trait_derive::Encode, Decode, BorrowDecodeFromDecode)]
 #[trait_decode(trait = ParticleFishTrait)]
 pub struct TestGeneric<T = Fish> {
     pub particle: Particle,
