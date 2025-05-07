@@ -161,13 +161,12 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     let trait_ident = if let Some(trait_ident) = option_trait_name {
         trait_ident
     } else {
-        return TokenStream::default();
-        //return syn::Error::new(
-        //    proc_macro2::Span::mixed_site(),
-        //    "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
-        //)
-        //.to_compile_error()
-        //.into();
+        return syn::Error::new(
+            proc_macro2::Span::mixed_site(),
+            "Failed to parse attribute: correct usage: #[trait_decode(trait = path::to::Trait])]",
+        )
+        .to_compile_error()
+        .into();
     };
 
     let mut generics = input.generics.clone();
