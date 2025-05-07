@@ -27,9 +27,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
         .expect("Failed to parse attribute");
     }
 
-    let trait_name = option_trait_name.unwrap();
-
-    let trait_ident = trait_name.get_ident().cloned().unwrap();
+    let trait_ident = option_trait_name.unwrap();
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
@@ -157,9 +155,7 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
         .expect("Failed to parse attribute");
     }
 
-    let trait_name = option_trait_name.unwrap();
-
-    let trait_ident = trait_name.get_ident().cloned().unwrap();
+    let trait_ident = option_trait_name.unwrap();
 
     let mut generics = input.generics.clone();
     let mut where_clause = generics.make_where_clause().clone();
