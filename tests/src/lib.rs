@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bincode_trait_derive::{BorrowDecodeFromDecode, Decode, Encode};
 
 #[derive(Clone)]
@@ -151,12 +153,30 @@ pub struct TestGeneric<T = Fish> {
     pub generic: T,
 }
 
-pub trait Field {
+pub trait Ring {
     type Element;
 }
 
+pub trait Exponent {}
+impl Exponent for u16 {}
+
+pub trait MonomialOrder {}
+
+impl MonomialOrder for LexOrder {}
+pub struct LexOrder {}
+
 #[derive(bincode_trait_derive::Encode)]
-pub struct TestAssociatedGeneric<F: Field, T = Fish> {
+pub struct MultivariatePolynomial<F: Ring, E: Exponent = u16, O: MonomialOrder = LexOrder> {
+    pub coefficients: Vec<F::Element>,
+    pub exponents: Vec<E>,
+    /// The coefficient ring.
+    pub ring: F,
+    // pub variables: Arc<Vec<Variable>>,
+    pub(crate) _phantom: PhantomData<O>,
+}
+
+#[derive(bincode_trait_derive::Encode)]
+pub struct TestAssociatedGeneric<T, F: Ring> {
     pub particle: Particle,
     pub fish: Fish,
     pub generic: T,

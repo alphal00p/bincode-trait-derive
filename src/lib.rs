@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Path, Type, TypeParam,
-    TypePath, WherePredicate, parse_macro_input, spanned::Spanned,
+    TypePath, WherePredicate, parse_macro_input, spanned::Spanned, PathArguments,
 };
 
 #[proc_macro_derive(Encode)]
@@ -42,12 +42,32 @@ pub fn encode_derive(input: TokenStream) -> TokenStream {
     // Check for associated types in field types and add bounds for them
     for ty in field_types {
         if let Type::Path(type_path) = ty {
+            // Check for direct associated types like F::Element
             if type_path.path.segments.len() > 1 {
-                // This might be an associated type like F::Element
                 let predicate: WherePredicate = syn::parse_quote! {
                     #ty: ::bincode::Encode
                 };
                 where_clause_for_impl.predicates.push(predicate);
+            } 
+            
+            // Look for associated types inside generic containers like Vec<F::Element>
+            if !type_path.path.segments.is_empty() {
+                for segment in &type_path.path.segments {
+                    if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                        for arg in &args.args {
+                            if let syn::GenericArgument::Type(Type::Path(inner_type_path)) = arg {
+                                // Check if this is an associated type (contains ::)
+                                if inner_type_path.path.segments.len() > 1 {
+                                    let inner_type = Type::Path(inner_type_path.clone());
+                                    let predicate: WherePredicate = syn::parse_quote! {
+                                        #inner_type: ::bincode::Encode
+                                    };
+                                    where_clause_for_impl.predicates.push(predicate);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -193,7 +213,7 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
     if let Some(ref trait_ident_path) = option_trait_name {
         let pred: WherePredicate = syn::parse_quote! { #context_generic_ident: #trait_ident_path };
         where_clause_for_impl.predicates.push(pred);
-    } else if let Some(ref concrete_type_path) = option_context_type_name {
+    } else if let Some(ref _concrete_type_path) = option_context_type_name {
         // Instead of using the context_type directly in the where clause, we'll use it in the impl
         // Replace the generic context parameter with the concrete type
         // Just don't add any where predicates for the context
@@ -344,7 +364,7 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     if let Some(ref trait_ident_path) = option_trait_name {
         let pred: WherePredicate = syn::parse_quote! { #context_ident: #trait_ident_path };
         where_clause_for_impl.predicates.push(pred);
-    } else if let Some(ref concrete_type_path) = option_context_type_name {
+    } else if let Some(ref _concrete_type_path) = option_context_type_name {
         // Instead of using the context_type directly in the where clause, we'll use it in the impl
         // Replace the generic context parameter with the concrete type
         // Just don't add any where predicates for the context
