@@ -27,16 +27,18 @@ pub fn encode_derive(input: TokenStream) -> TokenStream {
             where_clause_for_impl.predicates.push(predicate);
         }
     }
-    
+
     // Extract field types to add additional bounds for associated types
     let field_types = match &input.data {
         Data::Struct(data_struct) => data_struct.fields.iter().map(|f| &f.ty).collect::<Vec<_>>(),
-        Data::Enum(data_enum) => data_enum.variants.iter()
+        Data::Enum(data_enum) => data_enum
+            .variants
+            .iter()
             .flat_map(|variant| variant.fields.iter().map(|f| &f.ty))
             .collect::<Vec<_>>(),
-        Data::Union(_) => vec![]
+        Data::Union(_) => vec![],
     };
-    
+
     // Check for associated types in field types and add bounds for them
     for ty in field_types {
         if let Type::Path(type_path) = ty {
@@ -129,7 +131,7 @@ pub fn encode_derive(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl #impl_generics ::bincode::Encode for #struct_name #ty_generics #where_clause_for_impl {
-            fn encode<E: ::bincode::enc::Encoder>(&self, encoder: &mut E) -> std::result::Result<(), ::bincode::error::EncodeError> {
+            fn encode<__E: ::bincode::enc::Encoder>(&self, encoder: &mut __E) -> std::result::Result<(), ::bincode::error::EncodeError> {
                 #encode_body
             }
         }
@@ -175,21 +177,26 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
     let mut generics_for_impl = input_ast.generics.clone();
     let mut where_clause_for_impl = input_ast.generics.make_where_clause().clone();
 
+    // Only add a generic parameter if we don't have a concrete context type
     let context_generic_ident = Ident::new("__Context", proc_macro2::Span::call_site());
-    let context_generic_param_for_impl =
-        GenericParam::Type(TypeParam::from(context_generic_ident.clone()));
 
-    generics_for_impl
-        .params
-        .push(context_generic_param_for_impl);
+    // Only add the generic parameter if not using a concrete context type
+    if option_context_type_name.is_none() {
+        let context_generic_param_for_impl =
+            GenericParam::Type(TypeParam::from(context_generic_ident.clone()));
+
+        generics_for_impl
+            .params
+            .push(context_generic_param_for_impl);
+    }
 
     if let Some(ref trait_ident_path) = option_trait_name {
         let pred: WherePredicate = syn::parse_quote! { #context_generic_ident: #trait_ident_path };
         where_clause_for_impl.predicates.push(pred);
     } else if let Some(ref concrete_type_path) = option_context_type_name {
-        let pred: WherePredicate =
-            syn::parse_quote! { #context_generic_ident = #concrete_type_path };
-        where_clause_for_impl.predicates.push(pred);
+        // Instead of using the context_type directly in the where clause, we'll use it in the impl
+        // Replace the generic context parameter with the concrete type
+        // Just don't add any where predicates for the context
     } else {
         // No attribute specifying trait or context_type. __Context remains generic for this impl.
         // It will be constrained by field requirements, e.g., `usize: Decode<__Context>` implies `__Context = ()`.
@@ -209,6 +216,15 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
             where_clause_for_impl.predicates.push(predicate);
         }
     }
+
+    // Create the context type based on whether it's generic or concrete
+    let context_type = if let Some(ref concrete_type_path) = option_context_type_name {
+        // If we're using a concrete type, use it directly
+        quote! { #concrete_type_path }
+    } else {
+        // Otherwise use the generic parameter
+        quote! { #context_generic_ident }
+    };
 
     let (impl_generics, _, _) = generics_for_impl.split_for_impl(); // Contains original generics + __Context
     let (_, ty_generics_for_struct, _) = input_ast.generics.split_for_impl(); // Original generics for struct type
@@ -262,8 +278,8 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        impl #impl_generics ::bincode::Decode<#context_generic_ident> for #struct_name #ty_generics_for_struct #where_clause_for_impl {
-            fn decode<D: ::bincode::de::Decoder<Context = #context_generic_ident>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
+        impl #impl_generics ::bincode::Decode<#context_type> for #struct_name #ty_generics_for_struct #where_clause_for_impl {
+            fn decode<D: ::bincode::de::Decoder<Context = #context_type>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
                 #decode_body
             }
         }
@@ -313,18 +329,25 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     let lifetime_de_param = GenericParam::Lifetime(LifetimeParam::new(lifetime_de_ident.clone()));
     generics_for_impl.params.push(lifetime_de_param);
 
+    // Only add a generic parameter if we don't have a concrete context type
     let context_ident = Ident::new("__Context", proc_macro2::Span::call_site());
-    let context_generic_param_for_impl = GenericParam::Type(TypeParam::from(context_ident.clone()));
-    generics_for_impl
-        .params
-        .push(context_generic_param_for_impl);
+
+    // Only add the generic parameter if not using a concrete context type
+    if option_context_type_name.is_none() {
+        let context_generic_param_for_impl =
+            GenericParam::Type(TypeParam::from(context_ident.clone()));
+        generics_for_impl
+            .params
+            .push(context_generic_param_for_impl);
+    }
 
     if let Some(ref trait_ident_path) = option_trait_name {
         let pred: WherePredicate = syn::parse_quote! { #context_ident: #trait_ident_path };
         where_clause_for_impl.predicates.push(pred);
     } else if let Some(ref concrete_type_path) = option_context_type_name {
-        let pred: WherePredicate = syn::parse_quote! { #context_ident = #concrete_type_path };
-        where_clause_for_impl.predicates.push(pred);
+        // Instead of using the context_type directly in the where clause, we'll use it in the impl
+        // Replace the generic context parameter with the concrete type
+        // Just don't add any where predicates for the context
     } else {
         // __Context remains generic for this impl.
     }
@@ -349,13 +372,22 @@ pub fn borrow_decode_from_trait_decode(input: TokenStream) -> TokenStream {
     // This should be implicitly handled if the Decode derive is also present and correct.
     // If Decode is not derived, this might lead to issues, but that's outside this macro's scope.
 
+    // Create the context type based on whether it's generic or concrete
+    let context_type = if let Some(ref concrete_type_path) = option_context_type_name {
+        // If we're using a concrete type, use it directly
+        quote! { #concrete_type_path }
+    } else {
+        // Otherwise use the generic parameter
+        quote! { #context_ident }
+    };
+
     let (impl_generics, _, _) = generics_for_impl.split_for_impl(); // Contains original generics + '_de + __Context
     let (_, ty_generics_for_struct, _) = input_ast.generics.split_for_impl(); // Original generics for struct type
 
     let expanded = quote! {
-        impl #impl_generics ::bincode::BorrowDecode<#lifetime_de_ident, #context_ident> for #struct_name #ty_generics_for_struct #where_clause_for_impl {
-            fn borrow_decode<D: ::bincode::de::BorrowDecoder<#lifetime_de_ident, Context = #context_ident>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
-                <Self as ::bincode::Decode<#context_ident>>::decode(decoder)
+        impl #impl_generics ::bincode::BorrowDecode<#lifetime_de_ident, #context_type> for #struct_name #ty_generics_for_struct #where_clause_for_impl {
+            fn borrow_decode<D: ::bincode::de::BorrowDecoder<#lifetime_de_ident, Context = #context_type>>(decoder: &mut D) -> std::result::Result<Self, ::bincode::error::DecodeError> {
+                <Self as ::bincode::Decode<#context_type>>::decode(decoder)
             }
         }
     };

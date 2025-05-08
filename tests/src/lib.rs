@@ -171,29 +171,29 @@ pub struct SpecificContext {
     // though for these examples, the fields don't actively use it.
 }
 
-// #[derive(
-//     bincode_trait_derive::Encode,
-//     bincode_trait_derive::Decode,
-//     bincode_trait_derive::BorrowDecodeFromDecode,
-// )]
-// #[trait_decode(context_type=SpecificContext)]
-// pub struct DataForSpecificContext {
-//     pub item_id: u32,
-//     pub description: String,
-//     pub related_cow: Cow, // Cow uses #[trait_decode()]
-// }
+#[derive(
+    bincode_trait_derive::Encode,
+    bincode_trait_derive::Decode,
+    bincode_trait_derive::BorrowDecodeFromDecode,
+)]
+#[trait_decode(context_type = SpecificContext)]
+pub struct DataForSpecificContext {
+    pub item_id: u32,
+    pub description: String,
+    pub related_cow: Cow, // Cow uses #[trait_decode()]
+}
 
-// #[derive(
-//     bincode_trait_derive::Encode,
-//     bincode_trait_derive::Decode,
-//     bincode_trait_derive::BorrowDecodeFromDecode,
-// )]
-// #[trait_decode(context_type=SpecificContext)]
-// pub enum ItemVariantWithSpecificContext {
-//     Simple(u64),
-//     Described { name: String, value: i32 },
-//     ReferencedCow(Cow), // Add a variant with Cow
-// }
+#[derive(
+    bincode_trait_derive::Encode,
+    bincode_trait_derive::Decode,
+    bincode_trait_derive::BorrowDecodeFromDecode,
+)]
+#[trait_decode(context_type = SpecificContext)]
+pub enum ItemVariantWithSpecificContext {
+    Simple(u64),
+    Described { name: String, value: i32 },
+    ReferencedCow(Cow), // Add a variant with Cow
+}
 
 #[cfg(test)]
 mod tests {
