@@ -151,6 +151,50 @@ pub struct TestGeneric<T = Fish> {
     pub generic: T,
 }
 
+pub trait Field {
+    type Element;
+}
+
+#[derive(bincode_trait_derive::Encode)]
+pub struct TestAssociatedGeneric<F: Field, T = Fish> {
+    pub particle: Particle,
+    pub fish: Fish,
+    pub generic: T,
+    pub field: F,
+    pub el: F::Element,
+}
+
+#[derive(Debug, Clone)]
+pub struct SpecificContext {
+    pub version: u32,
+    // This context could hold specific data needed for decoding,
+    // though for these examples, the fields don't actively use it.
+}
+
+// #[derive(
+//     bincode_trait_derive::Encode,
+//     bincode_trait_derive::Decode,
+//     bincode_trait_derive::BorrowDecodeFromDecode,
+// )]
+// #[trait_decode(context_type=SpecificContext)]
+// pub struct DataForSpecificContext {
+//     pub item_id: u32,
+//     pub description: String,
+//     pub related_cow: Cow, // Cow uses #[trait_decode()]
+// }
+
+// #[derive(
+//     bincode_trait_derive::Encode,
+//     bincode_trait_derive::Decode,
+//     bincode_trait_derive::BorrowDecodeFromDecode,
+// )]
+// #[trait_decode(context_type=SpecificContext)]
+// pub enum ItemVariantWithSpecificContext {
+//     Simple(u64),
+//     Described { name: String, value: i32 },
+//     ReferencedCow(Cow), // Add a variant with Cow
+// }
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -4,7 +4,7 @@
 
 
   # https://devenv.sh/packages/
-  packages = [ ];
+  packages = [ pkgs.cargo-expand];
 
   # https://devenv.sh/languages/
   languages.rust = {
