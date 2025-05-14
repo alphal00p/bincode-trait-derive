@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Path, Type, TypeParam,
-    TypePath, WherePredicate, parse_macro_input, spanned::Spanned, PathArguments,
+    Data, DeriveInput, Fields, GenericParam, Ident, Lifetime, LifetimeParam, Path, PathArguments,
+    Type, TypeParam, TypePath, WherePredicate, parse_macro_input, spanned::Spanned,
 };
 
 #[proc_macro_derive(Encode)]
@@ -48,8 +48,8 @@ pub fn encode_derive(input: TokenStream) -> TokenStream {
                     #ty: ::bincode::Encode
                 };
                 where_clause_for_impl.predicates.push(predicate);
-            } 
-            
+            }
+
             // Look for associated types inside generic containers like Vec<F::Element>
             if !type_path.path.segments.is_empty() {
                 for segment in &type_path.path.segments {
@@ -267,6 +267,8 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
             Fields::Unit => quote! { Ok(Self) },
         },
         Data::Enum(data_enum) => {
+            let num_variants = data_enum.variants.iter().count();
+
             let variants = data_enum.variants.iter().enumerate().map(|(idx, variant)| {
                 let variant_ident = &variant.ident;
                 match &variant.fields {
@@ -290,7 +292,14 @@ pub fn trait_derive(input: TokenStream) -> TokenStream {
                 let discriminant: usize = ::bincode::Decode::decode(decoder)?;
                 match discriminant {
                     #(#variants)*
-                    _other => Err(::bincode::error::DecodeError::OtherString(format!("unexpected enum variant discriminant"))),
+                    _other => Err(::bincode::error::DecodeError::UnexpectedVariant {
+                        type_name: stringify!(#struct_name),
+                        found: _other as u32,
+                        allowed: &bincode::error::AllowedEnumVariants::Range {
+                            min: 0u32,
+                            max: (#num_variants - 1) as u32,
+                        },
+                    }),
                 }
             }
         }
