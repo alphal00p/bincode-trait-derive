@@ -96,7 +96,7 @@ pub fn encode_derive(input: TokenStream) -> TokenStream {
         Data::Enum(data_enum) => {
             let variant_arms = data_enum.variants.iter().enumerate().map(|(idx, variant)| {
                 let variant_ident = &variant.ident;
-                let discriminant = proc_macro2::Literal::usize_unsuffixed(idx);
+                let discriminant = proc_macro2::Literal::usize_suffixed(idx);
                 match &variant.fields {
                     Fields::Named(fields_named) => {
                         let field_pats = fields_named.named.iter().map(|f| &f.ident);
