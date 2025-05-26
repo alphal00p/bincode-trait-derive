@@ -5,6 +5,10 @@ members = ["tests"]
 name = "bincode-trait-derive"
 version = "0.1.0"
 edition = "2024"
+description = "A derive macro for bincode that allows generics with traits as context"
+license = "MIT"
+authors = ["Lucien Huber", "Mathijs Fraaije"]
+
 
 [lib]
 proc-macro = true
